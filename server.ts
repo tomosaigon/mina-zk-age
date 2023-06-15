@@ -58,6 +58,13 @@ const router = new Router();
 router.get('/', (ctx) => {
   ctx.body = 'Hello, World!';
 });
+router.get('/pubkey', (ctx) => {
+  const oraclePublicKey = zkAppInstance.oraclePublicKey.get();
+  ctx.body = JSON.stringify(oraclePublicKey);
+});
+router.get('/user/:id/:session/age', (ctx) => {
+  ctx.body = `Hello user ${ctx.params.id}, authenticated with session ${ctx.params.session}!`;
+});
 
 app.use(router.routes());
 

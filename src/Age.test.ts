@@ -40,6 +40,39 @@ async function localDeploy(
   await txn.send();
 }
 
+async function getSignedAge(userId: string) {
+  // We need to wait for SnarkyJS to finish loading before we can do anything
+  await isReady;
+
+  // The private key of our account. When running locally the hardcoded key will
+  // be used. In production the key will be loaded from a Vercel environment
+  // variable.
+  const privateKey = PrivateKey.fromBase58(
+    process.env.PRIVATE_KEY ??
+      'EKF65JKw9Q1XWLDZyZNGysBbYG21QbJf3a4xnEoZPZ28LKYGMw53'
+  );
+
+  const knownAge = (userId: string) => (userId === '1' ? 25 : 15);
+
+  // We compute the public key associated with our private key
+  const publicKey = privateKey.toPublicKey();
+
+  // Define a Field with the value of the users id
+  const id = Field(userId);
+
+  // Define age Field
+  const age = Field(knownAge(userId));
+
+  // Use our private key to sign an array of Fields containing the users id, age
+  const signature = Signature.create(privateKey, [id, age]);
+
+  return {
+    data: { id: id, age: age },
+    signature: signature,
+    publicKey: publicKey,
+  };
+}
+
 describe('AgeOracle', () => {
   let deployerAccount: PrivateKey,
     zkAppAddress: PublicKey,
@@ -81,12 +114,13 @@ describe('AgeOracle', () => {
       const zkAppInstance = new Age(zkAppAddress);
       await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount);
 
-      const response = await fetch(
-        // 'http://localhost:3000/user/1'
-        'https://mina-credit-score-signer-pe3eh.ondigitalocean.app/user/1'
-      );
+      // const response = await fetch(
+      //   // 'http://localhost:3000/user/1'
+      //   'https://mina-credit-score-signer-pe3eh.ondigitalocean.app/user/1'
+      // );
       // console.debug('response', response);
-      const data = await response.json();
+      // const data = await response.json();
+      const data = await getSignedAge('1');
       console.debug('data', data); // XXX
 
       const id = Field(data.data.id);
@@ -114,11 +148,12 @@ describe('AgeOracle', () => {
       const zkAppInstance = new Age(zkAppAddress);
       await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount);
 
-      const response = await fetch(
-        'https://mina-credit-score-signer-pe3eh.ondigitalocean.app/user/2'
-        // 'http://localhost:3000/user/2'
-      );
-      const data = await response.json();
+      // const response = await fetch(
+      //   'https://mina-credit-score-signer-pe3eh.ondigitalocean.app/user/2'
+      //   // 'http://localhost:3000/user/2'
+      // );
+      // const data = await response.json();
+      const data = await getSignedAge('2');
 
       const id = Field(data.data.id);
       const age = Field(data.data.age);

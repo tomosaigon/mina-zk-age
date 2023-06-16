@@ -40,7 +40,7 @@ async function localDeploy(
   await txn.send();
 }
 
-describe('CreditScoreOracle', () => {
+describe('AgeOracle', () => {
   let deployerAccount: PrivateKey,
     zkAppAddress: PublicKey,
     zkAppPrivateKey: PrivateKey;
@@ -66,7 +66,7 @@ describe('CreditScoreOracle', () => {
     setTimeout(shutdown, 800);
   });
 
-  it('generates and deploys the `CreditScoreOracle` smart contract', async () => {
+  it('generates and deploys the `Age` oracle smart contract', async () => {
     const zkAppInstance = new Age(zkAppAddress);
     await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount);
     const oraclePublicKey = zkAppInstance.oraclePublicKey.get();
@@ -76,7 +76,7 @@ describe('CreditScoreOracle', () => {
   jest.setTimeout(60000);
 
   describe('actual API requests', () => {
-    it('emits an `id` event containing the users id if their credit score is above 700 and the provided signature is valid', async () => {
+    it('emits an `id` event containing the users id if their age is above 700 and the provided signature is valid', async () => {
       // jest.setTimeout(60000);
       const zkAppInstance = new Age(zkAppAddress);
       await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount);
@@ -90,14 +90,14 @@ describe('CreditScoreOracle', () => {
       console.debug('data', data); // XXX
 
       const id = Field(data.data.id);
-      const creditScore = Field(data.data.creditScore);
+      const age = Field(data.data.age);
       const signature = Signature.fromJSON(data.signature);
       // console.debug('signature', signature);
 
       const txn = await Mina.transaction(deployerAccount, () => {
         zkAppInstance.verify(
           id,
-          creditScore,
+          age,
           signature ?? fail('something is wrong with the signature')
         );
       });
@@ -110,7 +110,7 @@ describe('CreditScoreOracle', () => {
       expect(verifiedEventValue).toEqual(id);
     });
 
-    it('throws an error if the credit score is below 700 even if the provided signature is valid', async () => {
+    it('throws an error if the age is below 700 even if the provided signature is valid', async () => {
       const zkAppInstance = new Age(zkAppAddress);
       await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount);
 
@@ -121,14 +121,14 @@ describe('CreditScoreOracle', () => {
       const data = await response.json();
 
       const id = Field(data.data.id);
-      const creditScore = Field(data.data.creditScore);
+      const age = Field(data.data.age);
       const signature = Signature.fromJSON(data.signature);
 
       expect(async () => {
         await Mina.transaction(deployerAccount, () => {
           zkAppInstance.verify(
             id,
-            creditScore,
+            age,
             signature ?? fail('something is wrong with the signature')
           );
         });
@@ -137,12 +137,12 @@ describe('CreditScoreOracle', () => {
   });
 
   describe('hardcoded values', () => {
-    it('emits an `id` event containing the users id if their credit score is above 700 and the provided signature is valid', async () => {
+    it('emits an `id` event containing the users id if their age is above 18 and the provided signature is valid', async () => {
       const zkAppInstance = new Age(zkAppAddress);
       await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount);
 
       const id = Field(1);
-      const creditScore = Field(787);
+      const age = Field(28);
       const signature = Signature.fromJSON({
         r: '13209474117923890467777795933147746532722569254037337512677934549675287266861',
         s: '12079365427851031707052269572324263778234360478121821973603368912000793139475',
@@ -151,7 +151,7 @@ describe('CreditScoreOracle', () => {
       const txn = await Mina.transaction(deployerAccount, () => {
         zkAppInstance.verify(
           id,
-          creditScore,
+          age,
           signature ?? fail('something is wrong with the signature')
         );
       });
@@ -163,12 +163,12 @@ describe('CreditScoreOracle', () => {
       expect(verifiedEventValue).toEqual(id);
     });
 
-    it('throws an error if the credit score is below 700 even if the provided signature is valid', async () => {
+    it('throws an error if the age is below 18 even if the provided signature is valid', async () => {
       const zkAppInstance = new Age(zkAppAddress);
       await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount);
 
       const id = Field(2);
-      const creditScore = Field(536);
+      const age = Field(16);
       const signature = Signature.fromJSON({
         r: '25163915754510418213153704426580201164374923273432613331381672085201550827220',
         s: '20455871399885835832436646442230538178588318835839502912889034210314761124870',
@@ -178,19 +178,19 @@ describe('CreditScoreOracle', () => {
         await Mina.transaction(deployerAccount, () => {
           zkAppInstance.verify(
             id,
-            creditScore,
+            age,
             signature ?? fail('something is wrong with the signature')
           );
         });
       }).rejects;
     });
 
-    it('throws an error if the credit score is above 700 and the provided signature is invalid', async () => {
+    it('throws an error if the age is above 18 and the provided signature is invalid', async () => {
       const zkAppInstance = new Age(zkAppAddress);
       await localDeploy(zkAppInstance, zkAppPrivateKey, deployerAccount);
 
       const id = Field(1);
-      const creditScore = Field(787);
+      const age = Field(87);
       const signature = Signature.fromJSON({
         r: '26545513748775911233424851469484096799413741017006352456100547880447752952428',
         s: '7381406986124079327199694038222605261248869991738054485116460354242251864564',
@@ -200,7 +200,7 @@ describe('CreditScoreOracle', () => {
         await Mina.transaction(deployerAccount, () => {
           zkAppInstance.verify(
             id,
-            creditScore,
+            age,
             signature ?? fail('something is wrong with the signature')
           );
         });
